@@ -1,0 +1,41 @@
+name: Grow GitHub Tree
+
+on:
+  schedule:
+    # Runs at 00:00 UTC every day
+    - cron: '0 0 * * *'
+  workflow_dispatch: # Allows you to run it manually to test
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Dependencies
+        run: |
+          pip install requests
+
+      - name: Generate Tree SVG
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.repository_owner }}
+        run: python generate_tree.py
+
+      - name: Commit and Push
+        run: |
+          git config --global user.name "TreeBot"
+          git config --global user.email "bot@github.com"
+          git add github_tree.svg
+          git commit -m "🌲 The tree has grown!" || echo "No changes to commit"
+          git push
